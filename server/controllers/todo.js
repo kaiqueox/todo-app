@@ -58,7 +58,7 @@ export const createTodo = async (req, res, next) => {
 export const updateTodo = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, isCompleted } = req.body;
+    const { title, isCompleted, isPinned } = req.body;
     
     const todo = await Todo.findById(id);
     
@@ -75,7 +75,8 @@ export const updateTodo = async (req, res, next) => {
       id, 
       { 
         title: title !== undefined ? title : todo.title, 
-        isCompleted: isCompleted !== undefined ? isCompleted : todo.isCompleted 
+        isCompleted: isCompleted !== undefined ? isCompleted : todo.isCompleted,
+        isPinned: isPinned !== undefined ? isPinned : todo.isPinned // Adicionado suporte a isPinned
       }, 
       { new: true }
     );

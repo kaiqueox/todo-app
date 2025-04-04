@@ -7,14 +7,12 @@ import TaskCard from '@/components/TaskCard';
 import TaskFormModal from '@/components/TaskFormModal';
 import DeleteTaskDialog from '@/components/DeleteTaskDialog';
 import { queryClient } from '@/hooks/useAuth';
-
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Todo | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-
   // Fetch tasks
   const { 
     data: tasks = [], 
@@ -33,10 +31,9 @@ export default function HomePage() {
       setIsTaskModalOpen(false);
     },
   });
-
   // Update task mutation
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { title?: string; isCompleted?: boolean } }) => 
+    mutationFn: ({ id, data }: { id: string; data: { title?: string; isCompleted?: boolean; isPinned?: boolean } }) => 
       todoApi.updateTodo(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
@@ -44,7 +41,6 @@ export default function HomePage() {
       setEditingTask(null);
     },
   });
-
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => todoApi.deleteTodo(id),
@@ -54,22 +50,18 @@ export default function HomePage() {
       setTaskToDelete(null);
     },
   });
-
   function handleOpenNewTaskModal() {
     setEditingTask(null);
     setIsTaskModalOpen(true);
   }
-
   function handleEditTask(task: Todo) {
     setEditingTask(task);
     setIsTaskModalOpen(true);
   }
-
   function handleDeleteTask(taskId: string) {
     setTaskToDelete(taskId);
     setIsDeleteDialogOpen(true);
   }
-
   function handleSaveTask(data: { title: string }) {
     if (editingTask) {
       updateTaskMutation.mutate({ id: editingTask._id, data });
@@ -77,20 +69,41 @@ export default function HomePage() {
       createTaskMutation.mutate(data);
     }
   }
-
   function handleToggleComplete(task: Todo) {
     updateTaskMutation.mutate({
       id: task._id,
       data: { isCompleted: !task.isCompleted }
     });
   }
-
+  // Nova função para alternar o estado fixado/não-fixado
+  function handleTogglePin(task: Todo) {
+    updateTaskMutation.mutate({
+      id: task._id,
+      data: { isPinned: !task.isPinned }
+    });
+  }
   function handleConfirmDelete() {
     if (taskToDelete !== null) {
       deleteTaskMutation.mutate(taskToDelete);
     }
   }
-
+  // Função para ordenar tarefas: fixadas primeiro, depois não completadas, depois completadas
+  function sortTasks(taskList: Todo[]) {
+    return [...taskList].sort((a, b) => {
+      // Primeiro, ordenar por fixadas (isPinned)
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      
+      // Depois, ordenar por não completadas
+      if (!a.isCompleted && b.isCompleted) return -1;
+      if (a.isCompleted && !b.isCompleted) return 1;
+      
+      // Finalmente, ordenar por data de criação (mais recentes primeiro)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }
+  // Tarefas ordenadas para exibição
+  const sortedTasks = sortTasks(tasks);
   return (
     <div className="app-container">
       {/* Header */}
@@ -124,15 +137,16 @@ export default function HomePage() {
         )}
         
         {/* Task List */}
-        {tasks.length > 0 && (
+        {sortedTasks.length > 0 && (
           <div className="task-list">
-            {tasks.map((task) => (
+            {sortedTasks.map((task) => (
               <TaskCard
                 key={task._id}
                 task={task}
                 onEdit={() => handleEditTask(task)}
                 onDelete={() => handleDeleteTask(task._id)}
                 onToggleComplete={() => handleToggleComplete(task)}
+                onTogglePin={() => handleTogglePin(task)} // Nova prop
               />
             ))}
           </div>
@@ -155,7 +169,10 @@ export default function HomePage() {
       
       {/* Floating Action Button */}
       <button
-        onClick={handleOpenNewTaskModal} className="fab"aria-label="Adicionar nova tarefa">
+        onClick={handleOpenNewTaskModal}
+        className="fab"
+        aria-label="Adicionar nova tarefa"
+      >
         +
       </button>
       

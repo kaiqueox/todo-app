@@ -9,6 +9,7 @@ export interface User {
     _id: string;
     title: string;
     isCompleted: boolean;
+    isPinned: boolean;
     userId: string;
     createdAt: string;
     updatedAt: string;
@@ -31,4 +32,5 @@ export interface User {
   export interface TodoUpdate {
     title?: string;
     isCompleted?: boolean;
+    isPinned?: boolean;
   }

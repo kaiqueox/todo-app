@@ -333,6 +333,24 @@
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  /* Estilos para tarefas fixadas */
+  .card-pinned {
+    border-left: 4px solid #3b82f6;
+    background-color: #f8fafc;
+  }
+  .pin-indicator {
+    margin-right: 0.5rem;
+    color: #3b82f6;
+  }
+  .btn-pin {
+    background-color: #e5e7eb;
+    color: #374151;
+  }
+  .btn-pin-active {
+    background-color: #dbeafe;
+    color: #2563eb;
+  }
   
   .toast {
     padding: 1rem;
