@@ -68,6 +68,7 @@ export const todoApi = {
   },
 
   createTodo: async (todo: TodoInput): Promise<Todo> => {
+    console.log('Enviando novo todo:', todo);
     const response = await fetch(`${API_BASE}/api/todos`, {
       method: 'POST',
       headers: {

@@ -5,11 +5,16 @@ const TodoSchema = new mongoose.Schema({
     required: [true, 'Título é obrigatório'],
     trim: true,
   },
+  description: {
+    type: String,
+    default: '', // Garantir valor padrão
+    trim: true,
+  },
   isCompleted: {
     type: Boolean,
     default: false,
   },
-  isPinned: {  
+  isPinned: {
     type: Boolean,
     default: false,
   },

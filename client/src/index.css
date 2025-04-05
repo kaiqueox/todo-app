@@ -23,7 +23,7 @@
   }
   
   .auth-container {
-    background-color: white;
+    background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     width: 100%;
@@ -373,6 +373,54 @@
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+
+
+  /* Campo de descrição */
+
+
+  .form-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+
+  /* Estilo para mostrar descrição no card */
+  .task-description {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Estilo para o botão "Mostrar mais" */
+  .btn-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: #3b82f6;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .btn-link:hover {
+    color: #2563eb;
+  }
+
+
   
   /* Not Found Page */
   .not-found-page {

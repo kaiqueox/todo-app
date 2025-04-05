@@ -4,7 +4,7 @@ import { Todo } from '@/types';
 interface TaskFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { title: string }) => void;
+  onSave: (data: { title: string; description: string }) => void;
   task: Todo | null;
   isPending: boolean;
 }
@@ -17,11 +17,13 @@ export default function TaskFormModal({
   isPending,
 }: TaskFormModalProps) {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setTitle(task?.title || '');
+      setDescription(task?.description || ''); //inicializa com descrição
       setError('');
     }
   }, [isOpen, task]);
@@ -34,7 +36,7 @@ export default function TaskFormModal({
       return;
     }
     
-    onSave({ title });
+    onSave({ title, description });
   };
 
   if (!isOpen) return null;
@@ -67,6 +69,20 @@ export default function TaskFormModal({
             )}
           </div>
 
+          <div className="form-group">
+            <label htmlFor="taskDescription">
+              descrição
+            </label>
+            <textarea
+            id="taskDescription"
+            className="form-textarea"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Descrição da tarefa (opicional)"
+            rows={4}
+            />
+            </div>
+            
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancelar

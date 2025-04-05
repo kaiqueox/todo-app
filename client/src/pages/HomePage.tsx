@@ -25,7 +25,7 @@ export default function HomePage() {
   
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: (taskData: { title: string }) => todoApi.createTodo(taskData),
+    mutationFn: (taskData: { title: string; description: string }) => todoApi.createTodo(taskData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       setIsTaskModalOpen(false);
@@ -62,7 +62,7 @@ export default function HomePage() {
     setTaskToDelete(taskId);
     setIsDeleteDialogOpen(true);
   }
-  function handleSaveTask(data: { title: string }) {
+  function handleSaveTask(data: { title: string; description: string}) {
     if (editingTask) {
       updateTaskMutation.mutate({ id: editingTask._id, data });
     } else {

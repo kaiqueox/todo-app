@@ -35,7 +35,7 @@ export const getTodoById = async (req, res, next) => {
 // Criar uma nova tarefa
 export const createTodo = async (req, res, next) => {
   try {
-    const { title } = req.body;
+    const { title, description } = req.body; // Extrair corretamente da requisição
     
     if (!title) {
       return next(createError(400, "O título é obrigatório"));
@@ -43,13 +43,16 @@ export const createTodo = async (req, res, next) => {
     
     const newTodo = new Todo({
       title,
+      description: description || '', // Usar o valor da requisição ou string vazia
       isCompleted: false,
+      isPinned: false,
       userId: req.user.id
     });
     
     const savedTodo = await newTodo.save();
     res.status(201).json(savedTodo);
   } catch (error) {
+    console.error('Erro ao criar todo:', error);
     next(error);
   }
 };
@@ -58,7 +61,7 @@ export const createTodo = async (req, res, next) => {
 export const updateTodo = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, isCompleted, isPinned } = req.body;
+    const { title, description, isCompleted, isPinned } = req.body;
     
     const todo = await Todo.findById(id);
     
@@ -75,8 +78,9 @@ export const updateTodo = async (req, res, next) => {
       id, 
       { 
         title: title !== undefined ? title : todo.title, 
+        description: description !== undefined ? description : todo.description, 
         isCompleted: isCompleted !== undefined ? isCompleted : todo.isCompleted,
-        isPinned: isPinned !== undefined ? isPinned : todo.isPinned // Adicionado suporte a isPinned
+        isPinned: isPinned !== undefined ? isPinned : todo.isPinned 
       }, 
       { new: true }
     );

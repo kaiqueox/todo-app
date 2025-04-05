@@ -8,6 +8,7 @@ export interface User {
   export interface Todo {
     _id: string;
     title: string;
+    description: string;
     isCompleted: boolean;
     isPinned: boolean;
     userId: string;
@@ -27,10 +28,12 @@ export interface User {
   
   export interface TodoInput {
     title: string;
+    description?: string;
   }
   
   export interface TodoUpdate {
     title?: string;
+    description?: string;
     isCompleted?: boolean;
     isPinned?: boolean;
   }
