@@ -207,6 +207,7 @@
     border-radius: 8px;
     width: 100%;
     max-width: 500px;
+    padding: 0 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   
@@ -224,20 +225,28 @@
   
   .modal-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 1rem;
+    padding: 10px 0;
     border-top: 1px solid #e5e7eb;
   }
   
   .btn-close {
-    background: none;
+    background: #000;
+    width: 25px;
+    height: 25px;
+    border-radius: 50px;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.5rem;  
     cursor: pointer;
-    color: #6b7280;
+    color: #fff;
+    transition: .5s ease-in-out ;
   }
   
+  .btn-close:hover{
+    background: #ccc;
+    color: #000;
+  }
   /* Form Elements */
   .form-group {
     margin-bottom: 1rem;

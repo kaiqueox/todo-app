@@ -71,7 +71,7 @@ export default function TaskFormModal({
 
           <div className="form-group">
             <label htmlFor="taskDescription">
-              descrição
+              Descrição
             </label>
             <textarea
             id="taskDescription"
