@@ -386,8 +386,6 @@
 
 
   /* Campo de descrição */
-
-
   .form-textarea {
     width: 100%;
     padding: 0.5rem;
@@ -477,4 +475,85 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+  }
+
+  .react-datepicker-wrapper {
+    width: 100%;
+  }
+  .date-container {
+    display: flex;
+    gap: 1rem;
+  }
+  .date-container .form-group {
+    flex: 1;
+  }
+  /* Estilos para a seção de tarefas fixadas */
+  .pinned-tasks-container {
+    background-color: #f0f9ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid #bae6fd;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  .pinned-tasks-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #0284c7;
+  }
+  .pinned-tasks-header svg {
+    margin-right: 0.5rem;
+  }
+  .pinned-tasks-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  /* Animações */
+  @keyframes slideInUp {
+    from {
+      transform: translateY(40px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .pinned-tasks-container {
+    animation: fadeIn 0.5s ease-out;
+  }
+  .task-item-enter {
+    animation: slideInUp 0.4s ease-out forwards;
+  }
+  /* Estilos de datas para os cards */
+  .task-dates {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+  }
+  .task-dates svg {
+    margin-right: 0.25rem;
+  }
+  .task-date-separator {
+    margin: 0 0.5rem;
+  }
+  /* Estilo para o indicador de tarefas com prazo próximo */
+  .deadline-warning {
+    color: #f59e0b;
+  }
+  .deadline-danger {
+    color: #ef4444;
   }

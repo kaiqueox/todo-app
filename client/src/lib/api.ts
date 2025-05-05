@@ -68,11 +68,12 @@ export const todoApi = {
   },
 
   createTodo: async (todo: TodoInput): Promise<Todo> => {
-    console.log('Enviando novo todo:', todo);
     const response = await fetch(`${API_BASE}/api/todos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+        'Pragma': 'no-cache'
       },
       body: JSON.stringify(todo),
       credentials: 'include',
@@ -85,6 +86,8 @@ export const todoApi = {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+        'Pragma': 'no-cache'
       },
       body: JSON.stringify(updates),
       credentials: 'include',

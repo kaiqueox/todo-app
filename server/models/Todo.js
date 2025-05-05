@@ -7,8 +7,16 @@ const TodoSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    default: '', // Garantir valor padrão
+    default: '',
     trim: true,
+  },
+  startDate: {  // Nova propriedade para data de início
+    type: Date,
+    default: null,
+  },
+  endDate: {  // Nova propriedade para data de término
+    type: Date,
+    default: null,
   },
   isCompleted: {
     type: Boolean,

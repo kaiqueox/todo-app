@@ -9,6 +9,8 @@ export interface User {
     _id: string;
     title: string;
     description: string;
+    startDate: string | null;
+    endDate: string | null;
     isCompleted: boolean;
     isPinned: boolean;
     userId: string;
@@ -29,11 +31,15 @@ export interface User {
   export interface TodoInput {
     title: string;
     description?: string;
+    startDate?: string | null;
+    endDate?: string | null;
   }
   
   export interface TodoUpdate {
     title?: string;
     description?: string;
+    startDate?: string | null;
+    endDate?: string | null;
     isCompleted?: boolean;
     isPinned?: boolean;
   }

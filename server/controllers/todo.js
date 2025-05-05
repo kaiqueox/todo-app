@@ -35,7 +35,7 @@ export const getTodoById = async (req, res, next) => {
 // Criar uma nova tarefa
 export const createTodo = async (req, res, next) => {
   try {
-    const { title, description } = req.body; // Extrair corretamente da requisição
+    const { title, description, startDate, endDate } = req.body;
     
     if (!title) {
       return next(createError(400, "O título é obrigatório"));
@@ -43,7 +43,9 @@ export const createTodo = async (req, res, next) => {
     
     const newTodo = new Todo({
       title,
-      description: description || '', // Usar o valor da requisição ou string vazia
+      description: description || '',
+      startDate: startDate || null,
+      endDate: endDate || null,
       isCompleted: false,
       isPinned: false,
       userId: req.user.id
@@ -61,7 +63,7 @@ export const createTodo = async (req, res, next) => {
 export const updateTodo = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, description, isCompleted, isPinned } = req.body;
+    const { title, description, startDate, endDate, isCompleted, isPinned } = req.body;
     
     const todo = await Todo.findById(id);
     
@@ -78,15 +80,18 @@ export const updateTodo = async (req, res, next) => {
       id, 
       { 
         title: title !== undefined ? title : todo.title, 
-        description: description !== undefined ? description : todo.description, 
+        description: description !== undefined ? description : todo.description,
+        startDate: startDate !== undefined ? startDate : todo.startDate,
+        endDate: endDate !== undefined ? endDate : todo.endDate,
         isCompleted: isCompleted !== undefined ? isCompleted : todo.isCompleted,
-        isPinned: isPinned !== undefined ? isPinned : todo.isPinned 
+        isPinned: isPinned !== undefined ? isPinned : todo.isPinned
       }, 
       { new: true }
     );
     
     res.status(200).json(updatedTodo);
   } catch (error) {
+    console.error('Erro ao atualizar todo:', error);
     next(error);
   }
 };

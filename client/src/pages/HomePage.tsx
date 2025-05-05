@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { todoApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,46 +6,105 @@ import { Todo } from '@/types';
 import TaskCard from '@/components/TaskCard';
 import TaskFormModal from '@/components/TaskFormModal';
 import DeleteTaskDialog from '@/components/DeleteTaskDialog';
-import { queryClient } from '@/hooks/useAuth';
+import { queryClient } from '@/lib/queryClient';
+
+// Função auxiliar para ajustar datas e evitar problemas de fuso horário
+function formatDateToUTC(date: Date): string {
+  const adjustedDate = new Date(date);
+  adjustedDate.setDate(adjustedDate.getDate());
+  
+  // Formatar a data ajustada como ISO string
+  return adjustedDate.toISOString();
+}
+  
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Todo | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [newlyPinnedTaskId, setNewlyPinnedTaskId] = useState<string | null>(null);
   // Fetch tasks
   const { 
     data: tasks = [], 
     isLoading: tasksLoading,
     isError: tasksError,
+    refetch: refreshTasks,
   } = useQuery<Todo[]>({
     queryKey: ['todos'],
     queryFn: () => todoApi.getAllTodos(),
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
+  
+  useEffect(() => {
+    if (newlyPinnedTaskId) {
+      const timer = setTimeout(() => {
+        setNewlyPinnedTaskId(null);
+      }, 600); 
+      
+      return () => clearTimeout(timer);
+    }
+  }, [newlyPinnedTaskId]);
   
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: (taskData: { title: string; description: string }) => todoApi.createTodo(taskData),
+    mutationFn: (taskData: { 
+      title: string; 
+      description: string; 
+      startDate: Date | null; 
+      endDate: Date | null; 
+    }) => {
+      // Converter as datas para strings ISO com ajuste de fuso horário
+      const apiData = {
+        title: taskData.title,
+        description: taskData.description,
+        startDate: taskData.startDate ? formatDateToUTC(taskData.startDate) : null,
+        endDate: taskData.endDate ? formatDateToUTC(taskData.endDate) : null
+      };
+      
+      return todoApi.createTodo(apiData);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'], refetchType: 'active' });
+      refreshTasks();
       setIsTaskModalOpen(false);
     },
   });
   // Update task mutation
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { title?: string; isCompleted?: boolean; isPinned?: boolean } }) => 
-      todoApi.updateTodo(id, data),
+    mutationFn: ({ id, data }: { 
+      id: string; 
+      data: any 
+    }) => {
+      // Processar datas para evitar problemas de fuso horário
+      const apiData = { ...data };
+      
+      if (data.startDate !== undefined) {
+        apiData.startDate = data.startDate ? formatDateToUTC(data.startDate) : null;
+      }
+      
+      if (data.endDate !== undefined) {
+        apiData.endDate = data.endDate ? formatDateToUTC(data.endDate) : null;
+      }
+      
+      return todoApi.updateTodo(id, apiData);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'], refetchType: 'active' });
+      refreshTasks();
       setIsTaskModalOpen(false);
       setEditingTask(null);
     },
   });
+
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => todoApi.deleteTodo(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'], refetchType: 'active' });
+      refreshTasks();
       setIsDeleteDialogOpen(false);
       setTaskToDelete(null);
     },
@@ -62,48 +121,126 @@ export default function HomePage() {
     setTaskToDelete(taskId);
     setIsDeleteDialogOpen(true);
   }
-  function handleSaveTask(data: { title: string; description: string}) {
+  function handleSaveTask(data: { 
+    title: string; 
+    description: string; 
+    startDate: Date | null; 
+    endDate: Date | null; 
+  }) {
     if (editingTask) {
-      updateTaskMutation.mutate({ id: editingTask._id, data });
+      updateTaskMutation.mutate(
+        { id: editingTask._id, data },
+        {
+          onSuccess: () => {
+            refreshTasks(); 
+          }
+        }
+      );
     } else {
-      createTaskMutation.mutate(data);
+      createTaskMutation.mutate(
+        data,
+        {
+          onSuccess: () => {
+            refreshTasks();
+          }
+        }
+      );
     }
   }
   function handleToggleComplete(task: Todo) {
-    updateTaskMutation.mutate({
-      id: task._id,
-      data: { isCompleted: !task.isCompleted }
-    });
+    updateTaskMutation.mutate(
+      {
+        id: task._id,
+        data: { isCompleted: !task.isCompleted }
+      },
+      {
+        onSuccess: () => {
+          refreshTasks(); 
+        }
+      }
+    );
   }
-  // Nova função para alternar o estado fixado/não-fixado
+  // Função para alternar o estado fixado/não-fixado com animação
   function handleTogglePin(task: Todo) {
-    updateTaskMutation.mutate({
-      id: task._id,
-      data: { isPinned: !task.isPinned }
-    });
+    // Se estamos fixando a tarefa (não estava fixada antes), definir o ID para animação
+    if (!task.isPinned) {
+      setNewlyPinnedTaskId(task._id);
+    }
+    
+    updateTaskMutation.mutate(
+      {
+        id: task._id,
+        data: { isPinned: !task.isPinned }
+      },
+      {
+        onSuccess: () => {
+          refreshTasks(); 
+        }
+      }
+    );
   }
   function handleConfirmDelete() {
     if (taskToDelete !== null) {
-      deleteTaskMutation.mutate(taskToDelete);
+      deleteTaskMutation.mutate(
+        taskToDelete,
+        {
+          onSuccess: () => {
+            refreshTasks();
+          }
+        }
+      );
     }
   }
-  // Função para ordenar tarefas: fixadas primeiro, depois não completadas, depois completadas
-  function sortTasks(taskList: Todo[]) {
-    return [...taskList].sort((a, b) => {
-      // Primeiro, ordenar por fixadas (isPinned)
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      
-      // Depois, ordenar por não completadas
+  // Função para organizar tarefas
+  function organizeTasksByPin(taskList: Todo[]) {
+    const pinnedTasks = taskList.filter(task => task.isPinned);
+    const unpinnedTasks = taskList.filter(task => !task.isPinned);
+    
+    // Ordenar tarefas não fixadas: não completadas primeiro, depois por data de término
+    const sortedUnpinnedTasks = [...unpinnedTasks].sort((a, b) => {
+      // Primeiro por completude
       if (!a.isCompleted && b.isCompleted) return -1;
       if (a.isCompleted && !b.isCompleted) return 1;
       
-      // Finalmente, ordenar por data de criação (mais recentes primeiro)
+      // Depois por data de término (com prioridade para as que têm data)
+      if (a.endDate && !b.endDate) return -1;
+      if (!a.endDate && b.endDate) return 1;
+      
+      if (a.endDate && b.endDate) {
+        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      }
+      
+      // Por último, ordenar por data de criação (mais recentes primeiro)
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+    
+    // Ordenar tarefas fixadas: não completadas primeiro, depois por data de término
+    const sortedPinnedTasks = [...pinnedTasks].sort((a, b) => {
+      if (!a.isCompleted && b.isCompleted) return -1;
+      if (a.isCompleted && !b.isCompleted) return 1;
+      
+      if (a.endDate && !b.endDate) return -1;
+      if (!a.endDate && b.endDate) return 1;
+      
+      if (a.endDate && b.endDate) {
+        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      }
+      
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    return {
+      pinnedTasks: sortedPinnedTasks,
+      unpinnedTasks: sortedUnpinnedTasks
+    };
   }
-  // Tarefas ordenadas para exibição
-  const sortedTasks = sortTasks(tasks);
+  // Organizar tarefas
+  const { pinnedTasks, unpinnedTasks } = organizeTasksByPin(tasks);
+  // Verificar o estado das mutações
+  const isCreatePending = createTaskMutation.status === 'pending';
+  const isUpdatePending = updateTaskMutation.status === 'pending';
+  const isDeletePending = deleteTaskMutation.status === 'pending';
+  const isLogoutPending = logoutMutation.status === 'pending';
   return (
     <div className="app-container">
       {/* Header */}
@@ -111,19 +248,44 @@ export default function HomePage() {
         <h1>Minhas Tarefas</h1>
         
         <div className="user-menu">
-          <span className="user-email">{user?.email}</span>
+          <span className="user-email">{user?.email || ''}</span>
           <button 
             onClick={() => logoutMutation.mutate()} 
             className="btn btn-small"
-            disabled={logoutMutation.isPending}
+            disabled={isLogoutPending}
           >
-            {logoutMutation.isPending ? 'Saindo...' : 'Sair'}
+            {isLogoutPending ? 'Saindo...' : 'Sair'}
           </button>
         </div>
       </header>
       
       {/* Main Content */}
       <main className="app-content">
+        {/* Seção de tarefas fixadas */}
+        {pinnedTasks.length > 0 && (
+          <div className="pinned-tasks-container">
+            <div className="pinned-tasks-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1v4m0 18v-4M4 12H1m22 0h-3M6.3 17.7l-2.8 2.8M20.5 3.5l-2.8 2.8M17.7 17.7l2.8 2.8M3.5 3.5l2.8 2.8"></path>
+              </svg>
+              <span>Tarefas Fixadas ({pinnedTasks.length})</span>
+            </div>
+            <div className="pinned-tasks-list">
+              {pinnedTasks.map((task) => (
+                <TaskCard
+                  key={task._id}
+                  task={task}
+                  onEdit={() => handleEditTask(task)}
+                  onDelete={() => handleDeleteTask(task._id)}
+                  onToggleComplete={() => handleToggleComplete(task)}
+                  onTogglePin={() => handleTogglePin(task)}
+                  isNewlyPinned={task._id === newlyPinnedTaskId}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Empty State */}
         {!tasksLoading && tasks.length === 0 && (
           <div className="empty-state">
@@ -136,17 +298,18 @@ export default function HomePage() {
           </div>
         )}
         
-        {/* Task List */}
-        {sortedTasks.length > 0 && (
+        {/* Lista de tarefas não fixadas */}
+        {unpinnedTasks.length > 0 && (
           <div className="task-list">
-            {sortedTasks.map((task) => (
+            {unpinnedTasks.map((task) => (
               <TaskCard
                 key={task._id}
                 task={task}
                 onEdit={() => handleEditTask(task)}
                 onDelete={() => handleDeleteTask(task._id)}
                 onToggleComplete={() => handleToggleComplete(task)}
-                onTogglePin={() => handleTogglePin(task)} // Nova prop
+                onTogglePin={() => handleTogglePin(task)}
+                isNewlyPinned={task._id === newlyPinnedTaskId}
               />
             ))}
           </div>
@@ -182,14 +345,14 @@ export default function HomePage() {
         onClose={() => setIsTaskModalOpen(false)}
         onSave={handleSaveTask}
         task={editingTask}
-        isPending={createTaskMutation.isPending || updateTaskMutation.isPending}
+        isPending={isCreatePending || isUpdatePending}
       />
       
       <DeleteTaskDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
-        isPending={deleteTaskMutation.isPending}
+        isPending={isDeletePending}
       />
     </div>
   );

@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Todo } from '@/types';
-
-
 interface TaskCardProps {
   task: Todo;
   onEdit: () => void;
   onDelete: () => void;
   onToggleComplete: () => void;
   onTogglePin: () => void;
+  isNewlyPinned?: boolean;
 }
 export default function TaskCard({ 
   task, 
   onEdit, 
   onDelete, 
   onToggleComplete,
-  onTogglePin
+  onTogglePin,
+  isNewlyPinned = false
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
   
@@ -25,8 +25,68 @@ export default function TaskCard({
   const displayDescription = !expanded && hasLongDescription
     ? `${task.description.substring(0, 100)}...`
     : task.description;
+    
+  // Formatação de datas corrigida para evitar problemas de fuso horário
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    try {
+      // Extrair os componentes da data diretamente da string ISO
+      const parts = dateString.split("T")[0].split("-");
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      
+      const date = new Date(year, month, day);
+      
+      // Formatar para localização brasileira
+      return date.toLocaleDateString('pt-BR');
+    } catch (e) {
+      return null;
+    }
+  };
+  
+  const startDateFormatted = formatDate(task.startDate);
+  const endDateFormatted = formatDate(task.endDate);
+  
+  // Verificar proximidade do prazo
+  const getDeadlineStatus = () => {
+    if (!task.endDate || task.isCompleted) return null;
+    
+    const today = new Date();
+    const endDate = new Date(task.endDate);
+    
+    // Ajustar para comparação apenas de data sem horas
+    const todayUTC = new Date(Date.UTC(
+      today.getFullYear(),
+      today.getMonth(), 
+      today.getDate()
+    ));
+    
+    const endDateUTC = new Date(Date.UTC(
+      endDate.getFullYear(),
+      endDate.getMonth(), 
+      endDate.getDate()
+    ));
+    
+    const daysRemaining = Math.floor((endDateUTC.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysRemaining < 0) return 'overdue';
+    if (daysRemaining <= 2) return 'danger';
+    if (daysRemaining <= 5) return 'warning';
+    return null;
+  };
+  
+  const deadlineStatus = getDeadlineStatus();
+  
+  // Classes para a animação
+  const cardClasses = `
+    card 
+    ${task.isCompleted ? 'card-completed' : ''} 
+    ${task.isPinned ? 'card-pinned' : ''} 
+    ${isNewlyPinned ? 'task-item-enter' : ''}
+  `;
   return (
-    <div className={`card ${task.isCompleted ? 'card-completed' : ''} ${task.isPinned ? 'card-pinned' : ''}`}>
+    <div className={cardClasses}>
       <div className="task-item">
         <div className="task-content">
           <button
@@ -51,7 +111,7 @@ export default function TaskCard({
                 {hasLongDescription && (
                   <button 
                     onClick={(e) => {
-                      e.stopPropagation(); // Evitar propagar clique
+                      e.stopPropagation();
                       setExpanded(!expanded);
                     }} 
                     className="btn-link"
@@ -59,6 +119,32 @@ export default function TaskCard({
                     {expanded ? 'Mostrar menos' : 'Mostrar mais'}
                   </button>
                 )}
+              </div>
+            )}
+            
+            {/* Mostrar datas se existirem */}
+            {(startDateFormatted || endDateFormatted) && (
+              <div className={`task-dates ${deadlineStatus ? `deadline-${deadlineStatus}` : ''}`}>
+                <span>
+                  {startDateFormatted && (
+                    <>
+                      <span>Início: {startDateFormatted}</span>
+                    </>
+                  )}
+                  
+                  {startDateFormatted && endDateFormatted && (
+                    <span className="task-date-separator">•</span>
+                  )}
+                  
+                  {endDateFormatted && (
+                    <>
+                      <span>Término: {endDateFormatted}</span>
+                      {deadlineStatus === 'overdue' && <span> (Atrasada)</span>}
+                      {deadlineStatus === 'danger' && <span> (Urgente)</span>}
+                      {deadlineStatus === 'warning' && <span> (Em breve)</span>}
+                    </>
+                  )}
+                </span>
               </div>
             )}
           </div>
