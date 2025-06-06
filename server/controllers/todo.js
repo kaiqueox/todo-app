@@ -35,7 +35,7 @@ export const getTodoById = async (req, res, next) => {
 // Criar uma nova tarefa
 export const createTodo = async (req, res, next) => {
   try {
-    const { title, description, startDate, endDate } = req.body;
+    const { title, description, startDate, endDate, tags } = req.body;
     
     if (!title) {
       return next(createError(400, "O título é obrigatório"));
@@ -48,6 +48,7 @@ export const createTodo = async (req, res, next) => {
       endDate: endDate || null,
       isCompleted: false,
       isPinned: false,
+      tags: Array.isArray(tags) ? tags : [],
       userId: req.user.id
     });
     
@@ -63,7 +64,7 @@ export const createTodo = async (req, res, next) => {
 export const updateTodo = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, description, startDate, endDate, isCompleted, isPinned } = req.body;
+    const { title, description, startDate, endDate, isCompleted, isPinned, tags } = req.body;
     
     const todo = await Todo.findById(id);
     
@@ -84,7 +85,8 @@ export const updateTodo = async (req, res, next) => {
         startDate: startDate !== undefined ? startDate : todo.startDate,
         endDate: endDate !== undefined ? endDate : todo.endDate,
         isCompleted: isCompleted !== undefined ? isCompleted : todo.isCompleted,
-        isPinned: isPinned !== undefined ? isPinned : todo.isPinned
+        isPinned: isPinned !== undefined ? isPinned : todo.isPinned,
+        tags: tags !== undefined ? tags : todo.tags
       }, 
       { new: true }
     );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import "react-datepicker/dist/react-datepicker.css";
 import { Todo } from '@/types';
+import { TAGS } from '@/tags';
 
 function createDateWithoutTimezone(dateString: string) {
   const parts = dateString.split("T")[0].split("-");
@@ -20,6 +21,7 @@ interface TaskFormModalProps {
     description: string; 
     startDate: Date | null; 
     endDate: Date | null; 
+    tags: string[];
   }) => void;
   task: Todo | null;
   isPending: boolean;
@@ -35,11 +37,13 @@ export default function TaskFormModal({
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState('');
   useEffect(() => {
     if (isOpen) {
       setTitle(task?.title || '');
       setDescription(task?.description || '');
+      setTags(task?.tags || []);
       
       // Converter as datas ISO para objetos Date locais sem deslocamento de timezone
       if (task?.startDate) {
@@ -60,6 +64,9 @@ export default function TaskFormModal({
     }
   }, [isOpen, task]);
 
+  const handleTagToggle = (tag: string) => {
+    setTags((prev) => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +82,7 @@ export default function TaskFormModal({
       return;
     }
     
-    onSave({ title, description, startDate, endDate });
+    onSave({ title, description, startDate, endDate, tags });
   };
   if (!isOpen) return null;
   return (
@@ -151,6 +158,30 @@ export default function TaskFormModal({
     />
   </div>
 </div>  
+          
+          <div className="form-group">
+            <label>Tags</label>
+            <div className="tags-group-list">
+              {Array.from(new Set(TAGS.map(t => t.group))).map(group => (
+                <div key={group} className="tags-group">
+                  <div className="tags-group-title">{group}</div>
+                  <div className="tags-list">
+                    {TAGS.filter(t => t.group === group).map(tag => (
+                      <button
+                        type="button"
+                        key={tag.label}
+                        className={`tag-chip${tags.includes(tag.label) ? ' selected' : ''}`}
+                        style={{ background: tags.includes(tag.label) ? tag.color : '#f3f6fa', color: tags.includes(tag.label) ? '#fff' : tag.color, borderColor: tag.color }}
+                        onClick={() => handleTagToggle(tag.label)}
+                      >
+                        <span className="tag-icon">{tag.icon}</span> {tag.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           
           {error && (
             <div className="form-error">{error}</div>

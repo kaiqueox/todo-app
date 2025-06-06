@@ -9,13 +9,14 @@ export interface User {
     _id: string;
     title: string;
     description: string;
-    startDate: string | null;
-    endDate: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
     isCompleted: boolean;
     isPinned: boolean;
     userId: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tags?: string[];
   }
   
   export interface LoginCredentials {
@@ -33,6 +34,7 @@ export interface User {
     description?: string;
     startDate?: string | null;
     endDate?: string | null;
+    tags?: string[];
   }
   
   export interface TodoUpdate {
@@ -42,4 +44,5 @@ export interface User {
     endDate?: string | null;
     isCompleted?: boolean;
     isPinned?: boolean;
+    tags?: string[];
   }

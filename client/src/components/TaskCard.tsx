@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Todo } from '@/types';
+import { TAGS } from '@/tags';
+
 interface TaskCardProps {
   task: Todo;
   onEdit: () => void;
@@ -8,6 +10,7 @@ interface TaskCardProps {
   onTogglePin: () => void;
   isNewlyPinned?: boolean;
 }
+
 export default function TaskCard({ 
   task, 
   onEdit, 
@@ -85,6 +88,7 @@ export default function TaskCard({
     ${task.isPinned ? 'card-pinned' : ''} 
     ${isNewlyPinned ? 'task-item-enter' : ''}
   `;
+
   return (
     <div className={cardClasses}>
       <div className="task-item">
@@ -101,6 +105,35 @@ export default function TaskCard({
               {task.isPinned && <span className="pin-indicator">📌</span>}
               {task.title}
             </span>
+            
+            {/* Aqui as tags */}
+            {task.tags && task.tags.length > 0 && (
+              <div className="task-tags">
+                {task.tags.map(tagLabel => {
+                  const tag = TAGS.find(t => t.label === tagLabel);
+                  if (!tag) return null;
+                  return (
+                    <span
+                      key={tag.label}
+                      className="task-tag"
+                      style={{
+                        background: tag.color,
+                        color: '#fff',
+                        borderRadius: '999px',
+                        padding: '0.2em 0.8em',
+                        fontSize: '0.92em',
+                        marginRight: '0.4em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3em'
+                      }}
+                    >
+                      <span className="tag-icon">{tag.icon}</span> {tag.label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             
             {/* Mostrar descrição se existir */}
             {task.description && (
